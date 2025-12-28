@@ -358,25 +358,39 @@
 
 
   <script>
-    // --- 1. 데이터 초기화 (수정: 줄표(hr) 색상 추가) ---
+    // --- 1. 데이터 초기화 ---
+    // 시작하자마자 '크림 라떼' 색상이 적용되도록 설정
     let colors = { 
-      bg1:'#fdfbf7', bg2:'#f5f0e1', text:'#433422', 
-      hr: '#d6cbb6', // 기본 줄표 색상 (미색 테마에 맞춤)
-      hlbg:'#fff0a6', hltx:'#2a2115', 
-      th:'#857a6a', it:'#857a6a', bd:'#2a2115', qt:'#6b5b45',
-      bb_l_bg:'#fffcf5', bb_l_tx:'#433422',
-      bb_r_bg:'#6b5b45', bb_r_tx:'#ffffff'
+      bg1:'#fdfbf7', bg2:'#ede0d4', text:'#4a3b32', 
+      hr:'#d7ccc8', // 줄표 색상
+      hlbg:'#e6ccb2', hltx:'#3e2723', 
+      th:'#8d6e63', it:'#5d4037', bd:'#3e2723', qt:'#795548',
+      bb_l_bg:'#fafafa', bb_l_tx:'#5d4037',
+      bb_r_bg:'#a1887f', bb_r_tx:'#ffffff'
     };
+
     
-    // 프리셋 목록 (hr 색상 포함)
+    // 프리셋 목록 
     let presets = [
-      { name: '노블 아이보리', bg1:'#fdfbf7', bg2:'#f5f0e1', text:'#433422', hr:'#d6cbb6', hlbg:'#fff0a6', hltx:'#2a2115', th:'#857a6a', it:'#857a6a', bd:'#2a2115', qt:'#6b5b45', bb_l_bg:'#fffcf5', bb_l_tx:'#433422', bb_r_bg:'#6b5b45', bb_r_tx:'#ffffff' },
+      // 1. [크림 라떼]
+      { name: '크림 라떼', bg1:'#fdfbf7', bg2:'#ede0d4', text:'#4a3b32', hr:'#d7ccc8', hlbg:'#e6ccb2', hltx:'#3e2723', th:'#8d6e63', it:'#5d4037', bd:'#3e2723', qt:'#795548', bb_l_bg:'#fafafa', bb_l_tx:'#5d4037', bb_r_bg:'#a1887f', bb_r_tx:'#ffffff' },
+      
+      // 2. [코지 블라썸]
+      { name: '코지 블라썸', bg1:'#fff5f7', bg2:'#ffe4e9', text:'#5e2c38', hr:'#fbcfe8', hlbg:'#ffc2d1', hltx:'#5e2c38', th:'#be123c', it:'#be123c', bd:'#831843', qt:'#9f1239', bb_l_bg:'#fff0f3', bb_l_tx:'#881337', bb_r_bg:'#fb7185', bb_r_tx:'#ffffff' },
+      
+      // 3. [미스티 블루]
+      { name: '미스티 블루', bg1:'#f0f4f8', bg2:'#d9e2ec', text:'#243b53', hr:'#bcccdc', hlbg:'#d9e2ec', hltx:'#102a43', th:'#627d98', it:'#486581', bd:'#102a43', qt:'#829ab1', bb_l_bg:'#f0f4f8', bb_l_tx:'#334e68', bb_r_bg:'#486581', bb_r_tx:'#ffffff' },
+
+      // 4. 화이트 & 블루 계열
       { name: '기본 화이트', bg1:'#fbfdff', bg2:'#f1f5f9', text:'#0f172a', hr:'#cbd5e1', hlbg:'#fef08a', hltx:'#000000', th:'#64748b', it:'#64748b', bd:'#000000', qt:'#475569', bb_l_bg:'#ffffff', bb_l_tx:'#1e293b', bb_r_bg:'#3b82f6', bb_r_tx:'#ffffff' },
       { name: '소다', bg1:'#f0f9ff', bg2:'#bae6fd', text:'#0c4a6e', hr:'#7dd3fc', hlbg:'#7dd3fc', hltx:'#082f49', th:'#0284c7', it:'#0369a1', bd:'#0c4a6e', qt:'#38bdf8', bb_l_bg:'#e0f2fe', bb_l_tx:'#0c4a6e', bb_r_bg:'#0ea5e9', bb_r_tx:'#ffffff' },
       { name: '오션', bg1:'#0f172a', bg2:'#1e3a8a', text:'#f8fafc', hr:'#3b82f6', hlbg:'#60a5fa', hltx:'#ffffff', th:'#93c5fd', it:'#bfdbfe', bd:'#dbeafe', qt:'#3b82f6', bb_l_bg:'#1e293b', bb_l_tx:'#f8fafc', bb_r_bg:'#2563eb', bb_r_tx:'#ffffff' },
+      
+      // 5. 기타 컬러
       { name: '라벤더', bg1:'#f3e8ff', bg2:'#e0e7ff', text:'#4c1d95', hr:'#d8b4fe', hlbg:'#d8b4fe', hltx:'#2e1065', th:'#7c3aed', it:'#6d28d9', bd:'#4c1d95', qt:'#a78bfa', bb_l_bg:'#f5f3ff', bb_l_tx:'#4c1d95', bb_r_bg:'#8b5cf6', bb_r_tx:'#ffffff' },
       { name: '미드나잇', bg1:'#0f172a', bg2:'#1e293b', text:'#f8fafc', hr:'#334155', hlbg:'#3b82f6', hltx:'#ffffff', th:'#94a3b8', it:'#94a3b8', bd:'#e2e8f0', qt:'#cbd5e1', bb_l_bg:'#334155', bb_l_tx:'#f8fafc', bb_r_bg:'#3b82f6', bb_r_tx:'#ffffff' }
     ];
+
     
     let bgState = { mode:'gradient', imgData:null, sizeMode:'contain', overlayColor:'#000000', scale:100, posX:50, posY:50 };
     let insertTargetIndex = -1;
@@ -394,7 +408,7 @@
 일반 텍스트(나레이션)
 **별표 두개**
 *별표 하나(강조)*
-✨️별표 하나도 디테일 색상 설정에서 효과 끄면 나레이션이 돼요
+✨️오리, 롶 : 별표 하나가 나레이션일 경우, 디테일 색상 설정에서 강조 효과 끌 수 있어요
 
 ---
   <div style="margin-bottom: 1.5em; padding: 1.5em; background: #fdfbf7; border: 1px solid #d6cbb6; border-radius: 16px;">
@@ -406,6 +420,7 @@
         <li><b>✂️/🧴:</b> 커서가 위치한 곳에서 텍스트창을 잘라주고, 풀칠해줘요.</li>
         <li><b>🧙‍♂️:</b> HTML 겉포장 박스(div태그)에서 색상을 추출해 배경색으로 넣고, 겉포장을 벗겨줘요</li>
         <li><b>🖼:</b> 본문에 이미지를 넣어요.</li>
+        <li><b>스타일설정:</b> 배경색, 배경이미지, 폰트, 글자크기, 줄간격, 글자색 등을 설정할 수 있어요.</li>
     </ul>
 </div>
 `, width:100}];
