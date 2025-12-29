@@ -1245,33 +1245,79 @@ function setFont(fontName) {
     function handleBgUpload(i){ const f=i.files[0]; if(!f)return; const r=new FileReader(); r.onload=e=>{bgState.imgData=e.target.result; document.getElementById('showImgOption').checked = true; toggleImgPanel(true); setBgSize('contain'); }; r.readAsDataURL(f); }
     function setOverlay(c,b){ bgState.overlayColor=c; document.querySelectorAll('.btn-overlay').forEach(el=>el.classList.remove('selected')); b.classList.add('selected'); updatePreview(); saveData(); }
     
-    // [변경] 프리셋 적용 시 너비와 이탤릭 설정도 반영
+// [수정됨] 프리셋 적용 함수 (안전장치 추가)
     function applyPreset(p) {
+        // 1. 색상 덮어쓰기
         colors = { ...colors, ...p }; 
-document.getElementById('fontSelect').value = p.font;
-    // [✨여기 추가] 프리셋 폰트에 맞춰 버튼 UI 갱신
-    const btns = document.querySelectorAll('.font-btn');
-    btns.forEach(b => b.classList.remove('active'));
-    let targetBtn = Array.from(btns).find(b => b.getAttribute('onclick').includes(p.font.replace(/'/g, "\\'")));
-    if(targetBtn) targetBtn.classList.add('active');
-        if(p.padding) { document.getElementById('paddingRange').value = p.padding; updateVal('paddingRange', p.padding); }
-        if(p.gradAngle) { document.getElementById('gradAngle').value = p.gradAngle; updateVal('gradAngle', p.gradAngle); }
-        if(p.paraSpacing) { document.getElementById('paraSpacing').value = p.paraSpacing; updateVal('paraSpacing', p.paraSpacing); }
+
+        // 2. 폰트 설정 (프리셋에 폰트가 없으면 기본값 'Pretendard' 사용)
+        // 여기서 p.font가 없어도 에러가 안 나게 처리했어!
+        const targetFont = p.font || "Pretendard, sans-serif";
+        document.getElementById('fontSelect').value = targetFont;
+
+        // 3. 폰트 버튼 UI 갱신
+        const btns = document.querySelectorAll('.font-btn');
+        btns.forEach(b => b.classList.remove('active'));
         
-        // 추가된 설정들 불러오기
-        if(p.width) { document.getElementById('cardWidthInput').value = p.width; }
+        // targetFont를 안전하게 찾기
+        let targetBtn = Array.from(btns).find(b => {
+            const clickAttr = b.getAttribute('onclick');
+            // 폰트 이름에 따옴표가 있을 수 있으니 이스케이프 처리해서 비교
+            return clickAttr && clickAttr.includes(targetFont.replace(/'/g, "\\'"));
+        });
+        
+        // 버튼을 못 찾았으면 첫 번째(프리텐다드) 버튼 활성화
+        if(!targetBtn && btns.length > 0) targetBtn = btns[0];
+        if(targetBtn) targetBtn.classList.add('active');
+
+        // 4. 나머지 수치 설정 (값이 있을 때만 적용)
+        if(p.padding !== undefined) { 
+            document.getElementById('paddingRange').value = p.padding; 
+            updateVal('paddingRange', p.padding); 
+        }
+        if(p.gradAngle !== undefined) { 
+            document.getElementById('gradAngle').value = p.gradAngle; 
+            updateVal('gradAngle', p.gradAngle); 
+            // 각도 입력칸도 동기화
+            const angleInput = document.getElementById('input-gradAngle');
+            if(angleInput) angleInput.value = p.gradAngle;
+        }
+        if(p.paraSpacing !== undefined) { 
+            document.getElementById('paraSpacing').value = p.paraSpacing; 
+            updateVal('paraSpacing', p.paraSpacing); 
+        }
+        
+        // 너비, 이탤릭 등 추가 설정
+        if(p.width !== undefined) { document.getElementById('cardWidthInput').value = p.width; }
         if(p.noItalic !== undefined) { document.getElementById('noItalic').checked = p.noItalic; }
 
+        // 5. 배경 이미지/그라데이션 상태 복구
         if(p.bgState) {
             bgState = { ...bgState, ...p.bgState };
-            updateVal('bgScale', bgState.scale); updateVal('bgPosX', bgState.posX); updateVal('bgPosY', bgState.posY);
-            document.getElementById('bgScale').value = bgState.scale; document.getElementById('bgPosX').value = bgState.posX; document.getElementById('bgPosY').value = bgState.posY;
-            if(bgState.mode === 'image') { document.getElementById('showImgOption').checked = true; toggleImgPanel(true, false); } 
-            else { document.getElementById('showImgOption').checked = false; toggleImgPanel(false, false); }
+            updateVal('bgScale', bgState.scale); 
+            updateVal('bgPosX', bgState.posX); 
+            updateVal('bgPosY', bgState.posY);
+            
+            document.getElementById('bgScale').value = bgState.scale; 
+            document.getElementById('bgPosX').value = bgState.posX; 
+            document.getElementById('bgPosY').value = bgState.posY;
+            
+            if(bgState.mode === 'image') { 
+                document.getElementById('showImgOption').checked = true; 
+                toggleImgPanel(true, false); 
+            } else { 
+                document.getElementById('showImgOption').checked = false; 
+                toggleImgPanel(false, false); 
+            }
             setBgSize(bgState.sizeMode, false);
         }
-        updateUI(); updatePreview(); saveData();
+        
+        updateUI(); 
+        updatePreview(); 
+        saveData();
     }
+
+        
     function initPresets(){ 
         const c=document.getElementById('presetList'); c.innerHTML='';
         presets.forEach((p, idx)=>{ 
