@@ -380,12 +380,21 @@ input[type="number"]:disabled {
       </div>
     </div>
 
-    <div class="main-controls">
-      <span style="font-size:13px; font-weight:bold;">카드 폭:</span>
-      <input type="number" id="cardWidthInput" value="1200" step="10" max="3000" style="width:70px; padding:6px; border:1px solid #cbd5e1; border-radius:6px;" oninput="updatePreview(); saveData();"> px
-      <div style="flex-grow:1"></div>
-      <button id="btnStyleToggle" class="btn-style" onclick="toggleStylePanel()">🎨 스타일 설정 ▼</button>
-    </div>
+<div class="main-controls">
+  <span style="font-size:13px; font-weight:bold;">가로:</span>
+  <input type="number" id="cardWidthInput" value="1200" step="10" max="3000" style="width:70px; padding:6px; border:1px solid #cbd5e1; border-radius:6px;" oninput="updatePreview(); saveData();">
+  
+  <span style="margin:0 8px; color:#cbd5e1;">|</span>
+
+  <span style="font-size:13px; font-weight:bold;">세로:</span>
+  <label style="font-size:12px; display:flex; align-items:center; gap:4px; cursor:pointer;">
+      <input type="checkbox" id="chkAutoHeight" checked onchange="toggleHeightMode()"> 자동
+  </label>
+  <input type="number" id="cardHeightInput" value="1500" step="10" disabled style="width:70px; padding:6px; border:1px solid #cbd5e1; border-radius:6px; opacity:0.5;" oninput="updatePreview(); saveData();"> px
+
+  <div style="flex-grow:1"></div>
+  <button id="btnStyleToggle" class="btn-style" onclick="toggleStylePanel()">🎨 스타일 설정 ▼</button>
+</div>
 
     <div id="editorContent" class="editor-content-wrapper">
       
@@ -834,6 +843,8 @@ document.addEventListener('click', function(e) {
             colors, bgState, blocks, presets,
             settings: {
                 width: document.getElementById('cardWidthInput').value,
+              height: document.getElementById('cardHeightInput').value,
+    isAutoHeight: document.getElementById('chkAutoHeight').checked,
                 padding: document.getElementById('paddingRange').value,
                 fontSize: document.getElementById('fontSize').value,
                 lineHeight: document.getElementById('lineHeight').value,
@@ -857,6 +868,13 @@ document.addEventListener('click', function(e) {
             if(data.bgState) bgState = data.bgState;
             if(data.blocks) blocks = data.blocks;
             if(data.presets) presets = data.presets;
+          if (data.settings.height) document.getElementById('cardHeightInput').value = data.settings.height;
+    
+    // 자동 높이 여부 체크 (기본값은 true)
+    const savedAuto = data.settings.isAutoHeight !== undefined ? data.settings.isAutoHeight : true;
+    document.getElementById('chkAutoHeight').checked = savedAuto;
+    
+    toggleHeightMode(); // UI 상태 동기화
             if(data.settings) {
                 // [변경] 기본값 1200, 60, 45로 설정
                 document.getElementById('cardWidthInput').value = data.settings.width || 1200;
@@ -977,6 +995,22 @@ document.getElementById('fontSelect').value = data.settings.font || "Pretendard,
         blocks[i].content = newText; textarea.value = newText; updateTextContent(i, newText);
     }
 
+function toggleHeightMode() {
+    const isAuto = document.getElementById('chkAutoHeight').checked;
+    const hInput = document.getElementById('cardHeightInput');
+    
+    if (isAuto) {
+        hInput.disabled = true;
+        hInput.style.opacity = "0.5";
+    } else {
+        hInput.disabled = false;
+        hInput.style.opacity = "1";
+    }
+    updatePreview();
+    saveData();
+}
+        
+
     function toggleConvMode(i) {
         let content = blocks[i].content;
         const SAFE_L = '##_LEFT_ARROW_##'; const SAFE_R = '##_RIGHT_ARROW_##';
@@ -1065,30 +1099,43 @@ document.getElementById('fontSelect').value = data.settings.font || "Pretendard,
 function updatePreview() {
     const area = document.getElementById('capture-area');
     const widthInput = document.getElementById('cardWidthInput');
+    
+    // [추가 1] 높이 관련 요소 가져오기
+    const heightInput = document.getElementById('cardHeightInput');
+    const isAutoHeight = document.getElementById('chkAutoHeight').checked;
+
     if (!area || !widthInput) return;
 
     const width = widthInput.value;
     
-    // 1. 카드의 너비 고정
+    // 1. 카드의 너비 설정
     area.style.width = width + "px";
+    
+    // [추가 2] 높이 모드에 따른 스타일 설정 (자동 vs 고정)
+    if (isAutoHeight) {
+        area.style.height = 'auto';
+        area.style.overflow = 'visible'; // 내용만큼 늘어남
+    } else {
+        area.style.height = heightInput.value + 'px';
+        area.style.overflow = 'hidden'; // 넘치면 잘라냄
+    }
+
     const cardW = parseInt(width);
     
+    // --- 줌(Zoom) 계산 로직 (기존과 동일) ---
     let scale = 1;
     if (currentZoom === 'auto') {
-        area.style.transform = 'none'; // 정확한 높이 계산을 위해 잠시 초기화
+        area.style.transform = 'none'; 
         
         const cardH = area.scrollHeight; 
         
-        // ✅ [핵심 수정] 컨테이너 대신 '현재 창의 높이(window.innerHeight)'를 기준으로 계산!
-        // 위아래 여백(헤더 등)으로 약 200px 정도 빼줌
         const availH = window.innerHeight - 200; 
         const availW = window.innerWidth - 40;   
         
         if (cardH > 0) {
-            const scaleH = availH / cardH; // 세로 맞춤 비율
-            const scaleW = availW / cardW; // 가로 맞춤 비율
+            const scaleH = availH / cardH; 
+            const scaleW = availW / cardW; 
             
-            // 가로/세로 중 더 많이 줄여야 하는 쪽을 선택 (최대 1배, 그 이상 확대 안 함)
             scale = Math.min(scaleH, scaleW, 1.0); 
         }
         
@@ -1124,7 +1171,11 @@ function updatePreview() {
 
     const cssVars = `--hl-bg:${colors.hlbg}; --hl-col:${colors.hltx}; --th-col:${colors.th}; --bd-col:${colors.bd}; --qt-col:${colors.qt}; --it-col:${activeItalicColor}; --it-weight:${itWeight}; --it-style:${itStyle}; --hr-col:${colors.hr}; --bb-l-bg:${colors.bb_l_bg}; --bb-l-tx:${colors.bb_l_tx}; --bb-r-bg:${colors.bb_r_bg}; --bb-r-tx:${colors.bb_r_tx}; --base-sz:${fSize}px; --base-lh:${lHeight}; --para-sp:${document.getElementById('paraSpacing').value}em;`;
     
-    area.innerHTML = `<div class="card-frame" style="width:${width}px; padding:${pad}px; ${bgStyle} color:${colors.text}; font-family:${font}; ${cssVars}">` +
+    // [추가 3] 카드 프레임에도 높이 스타일 적용 (고정일 때 꽉 채우기)
+    const heightStyle = isAutoHeight ? '' : `height: ${heightInput.value}px; box-sizing: border-box;`;
+
+    // [수정] style 태그 안에 ${heightStyle} 추가됨
+    area.innerHTML = `<div class="card-frame" style="width:${width}px; ${heightStyle} padding:${pad}px; ${bgStyle} color:${colors.text}; font-family:${font}; ${cssVars}">` +
         blocks.map(b => b.type === 'text' ? `<div style="display:contents;">${parseContent(b.content)}</div>` : `<div style="text-align:center; margin:var(--para-sp) 0;"><img src="${b.content}" style="width:${b.width||100}%; border-radius:8px;"></div>`).join('') +
         `</div>`;
 }
